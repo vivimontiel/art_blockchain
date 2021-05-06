@@ -8,33 +8,87 @@ describe("My Dapp", function () {
   let myContract;
 
   describe("YourContract", function () {
-    it("Should deploy YourContract", async function () {
-      const YourContract = await ethers.getContractFactory("ArtMarketplace");
 
-      myContract = await YourContract.deploy();
+    it("Should Create Artwork", async function () {
+      const accounts = await ethers.getSigners();
+      const YourContractFactory = await ethers.getContractFactory("YourContract");
+      const YourContract = await YourContractFactory.deploy();
+
+      await YourContract.deployed();
+
+      await YourContract._createArt(2, "Rue de du four", "beau tableau", "today");
+      let test = await YourContract.artworks(0);
+      console.log(await YourContract.artworks(0));
+      expect(test.price).to.equal(2);
     });
 
-    describe("setPurpose()", function () {
-      it("Should be able to set a new purpose", async function () {
-        const newPurpose = "Test Purpose";
+    it("Should buy Artwork", async function () {
+      const accounts = await ethers.getSigners();
+      
+      const YourContractFactory = await ethers.getContractFactory("YourContract");
+      const YourContract = await YourContractFactory.deploy();
+      await YourContract.deployed();
 
-        await myContract.setPurpose(newPurpose);
-        expect(await myContract.purpose()).to.equal(newPurpose);
-      });
+      const other_account = YourContract.connect(accounts[1]);
+
+      await YourContract._createArt(2, "Rue de du four", "beau tableau", "today");
+
+      let test = await YourContract.artworks(0);
+
+      await other_account._buyArt(0, {value: 2});
+      let test2 = await YourContract.artworks(0);
+      
+      console.log(await YourContract.artworks(0));
+      console.log("NEW OWNER : ", test2.owner);
+      console.log("BUYER ACCOUNT : ", other_account.signer.address);
+
+      var newOwner = test2.owner;
+
+      expect(newOwner).to.equal(other_account.signer.address);
+
     });
 
-    describe("_createArt()", function () {
-      it("Should be able to create a new artwork", async function () {
-        const price = 20;
-        const location = here;
-        const description = "description";
-        const owner;
-        const date = "today";
-        const sold = false;
+    it("Should get Artwork", async function () {
+      const accounts = await ethers.getSigners();
+      
+      const YourContractFactory = await ethers.getContractFactory("YourContract");
+      const YourContract = await YourContractFactory.deploy();
+      await YourContract.deployed();
 
-        await myContract._createArt(price, location, description, msg.sender, date, false);
-        expect(await myContract._createArt()).to.equal(newPurpose);
-      });
+      await YourContract._createArt(2, "Rue de du four", "beau tableau", "today");
+      let test = await YourContract.artworks(0);
+
+      let artworksfromowner = await YourContract.getArtworksByOwnerId();  
+      console.log("artworksfromowner",artworksfromowner)   
+      var locationArt = test.location;
+      expect(locationArt).to.equal(artworksfromowner[0].location);
+
+    });
+
+    it("Should get All Artwork", async function () {
+      
+      const YourContractFactory = await ethers.getContractFactory("YourContract");
+      const YourContract = await YourContractFactory.deploy();
+      await YourContract.deployed();
+
+      await YourContract._createArt(2, "Rue de du four", "beau tableau", "today");
+      await YourContract._createArt(3, "Boulevard St Germain", "tableau", "hier");
+
+      let expectedArtworks0 = await YourContract.artworks(0);
+      let expectedArtworks1 = await YourContract.artworks(1);
+
+      let allArtworks = await YourContract.getAllArtworks();   
+      console.log(allArtworks);
+      
+      expect(parseInt(allArtworks[0].price._hex)).to.equal(expectedArtworks0.price);
+      expect(allArtworks[0].location).to.equal(expectedArtworks0.location);
+      expect(allArtworks[0].description).to.equal(expectedArtworks0.description);
+      expect(allArtworks[0].date).to.equal(expectedArtworks0.date);
+
+      expect(parseInt(allArtworks[1].price._hex)).to.equal(expectedArtworks1.price);
+      expect(allArtworks[1].location).to.equal(expectedArtworks1.location);
+      expect(allArtworks[1].description).to.equal(expectedArtworks1.description);
+      expect(allArtworks[1].date).to.equal(expectedArtworks1.date);
     });
 
 

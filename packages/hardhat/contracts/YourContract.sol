@@ -19,7 +19,6 @@ contract YourContract {
     mapping(uint => address) public artToSeller;
 
     Art[] public artworks;
-    Art[] public ownerArtworks;
 
     function _createArt(uint _price, string memory _location, string memory _description, string memory _date) public {
         artworks.push(Art(_price, _location, _description, msg.sender, _date, false));
@@ -35,14 +34,21 @@ contract YourContract {
         artworks[_id].owner = msg.sender;
     }
 
-    function getArtworksByOwnerId() public returns (Art[] memory result){
-        delete ownerArtworks;
-        for (uint i = 0; i < artworks.length; i++) { 
+    function getArtworksByOwnerId() external view returns (Art[] memory){
+        uint len = artworks.length;
+        Art[] memory ownerArt = new Art[](len);
+        uint j = 0;
+        for (uint i = 0; i < len; i++) { 
             if (artworks[i].owner == msg.sender) {
-                ownerArtworks.push(Art(artworks[i].price, artworks[i].location, artworks[i].description, msg.sender, artworks[i].date, false));
+                ownerArt[j] = artworks[i];
+                j++;
             }   
         }
-        return ownerArtworks;
+        return ownerArt;
+    }
+
+    function getAllArtworks() external view returns (Art[] memory){
+        return artworks;
     }
 
 }
